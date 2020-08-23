@@ -1,0 +1,68 @@
+# # Global variables are applied to all deployments and used as the default value of
+# # the deployments if a specific deployment value is missing.
+global:
+  user: "liurui"
+  ssh_port: 22
+  deploy_dir: "txy_test/deploy"
+  data_dir: "txy_test/data"
+
+server_configs:
+  tidb:
+    binlog.enable: false
+    binlog.ignore-error: false
+  tikv:
+    # 通常情况下使用默认值就可以了。在导数据的情况下建议将该参数设置为 1024000
+    storage.scheduler-concurrency: 1024000
+    # 该参数控制写入线程的个数，当写入操作比较频繁的时候，需要把该参数调大。使用 top -H -p tikv-pid
+    # 发现名称为 sched-worker-pool 的线程都特别忙，这个时候就需要将 scheduler-worker-pool-size
+    # 参数调大，增加写线程的个数。
+    storage.scheduler-worker-pool-size: 8
+    # 默认为 true，表示强制将数据刷到磁盘上。如果是非金融安全级别的业务场景，建议设置成 false，
+    # 以便获得更高的性能。
+    raftstore.sync-log: false
+    # 开启 RocksDB compaction 过程中的预读功能，如果使用的是机械磁盘，建议该值至少为2MB。
+    rocksdb.compaction-readahead-size: "2MB"
+    # 最多允许几个 memtable 存在。写入到 RocksDB 的数据首先会记录到 WAL 日志里面，然后会插入到
+    # memtable 里面，当 memtable 的大小到达了 write-buffer-size 限定的大小的时候，当前的
+    # memtable 会变成只读的，然后生成一个新的 memtable 接收新的写入。只读的 memtable 会被
+    # RocksDB 的 flush 线程（max-background-flushes 参数能够控制 flush 线程的最大个数）
+    # flush 到磁盘，成为 level0 的一个 sst 文件。当 flush 线程忙不过来，导致等待 flush 到磁盘的
+    # memtable 的数量到达 max-write-buffer-number 限定的个数的时候，RocksDB 会将新的写入
+    # stall 住，stall 是 RocksDB 的一种流控机制。在导数据的时候可以将 max-write-buffer-number
+    # 的值设置的更大一点，例如 10。
+    rocksdb.defaultcf.max-write-buffer-number: 10
+    # 当 level0 的 sst 文件个数到达 level0-slowdown-writes-trigger 指定的限度的时候，
+    # RocksDB 会尝试减慢写入的速度。因为 level0 的 sst 太多会导致 RocksDB 的读放大上升。
+    # level0-slowdown-writes-trigger 和 level0-stop-writes-trigger 是 RocksDB 进行流控的
+    # 另一个表现。当 level0 的 sst 的文件个数到达 4（默认值），level0 的 sst 文件会和 level1 中
+    # 有 overlap 的 sst 文件进行 compaction，缓解读放大的问题。
+    rocksdb.defaultcf.level0-slowdown-writes-trigger: 20
+    readpool.storage.use-unified-pool: false
+    readpool.coprocessor.use-unified-pool: true
+  pd:
+    schedule.leader-schedule-limit: 4
+    schedule.region-schedule-limit: 2048
+    schedule.replica-schedule-limit: 64
+  
+
+pd_servers:
+  - host: 192.168.130.33
+  - host: 192.168.130.34
+  - host: 192.168.130.35
+
+tidb_servers:
+  - host: 192.168.130.31
+
+tikv_servers:
+  - host: 192.168.130.33
+  - host: 192.168.130.34
+  - host: 192.168.130.35
+
+monitoring_servers:
+  - host: 192.168.130.31
+
+grafana_servers:
+  - host: 192.168.130.31
+
+alertmanager_servers:
+  - host: 192.168.130.31
