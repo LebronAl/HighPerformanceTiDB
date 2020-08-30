@@ -1,5 +1,5 @@
 # HighPerformanceTiDB
 some homework for learning TiDB
-
-* [week1](week1)
-* [week2](week2)
+- [x] [week1](week1)
+- [x] [week2](week2)
+- [x] [week3](week3)

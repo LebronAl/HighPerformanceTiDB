@@ -1,0 +1,9 @@
+Release Version: v4.0.0-beta.2-1086-g844c114d1
+Edition: Community
+Git Commit Hash: 844c114d10a050900a892f4a08ce8bad6a0e9fbb
+Git Branch: master
+UTC Build Time: 2020-08-29 14:54:13
+GoVersion: go1.13
+Race Enabled: false
+TiKV Min Version: v3.0.0-60965b006877ca7234adaced7890d7b029ed1306
+Check Table Before Drop: false
